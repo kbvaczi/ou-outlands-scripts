@@ -1,0 +1,16 @@
+while skill "Taste Identification" < 100
+    useskill "TasteIdentification"
+    wft 500
+    if skill "Taste Identification" < 50
+        if findtype "wedge%s% of cheese" backpack as food
+            target food
+            wait 2000
+        else 
+            overhead "Add some cheese to your backpack or train to 50 skill!" 34
+        stop
+        endif
+    else
+        target backpack 
+        wait 11000
+    endif
+endwhile
