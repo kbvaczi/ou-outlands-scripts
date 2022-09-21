@@ -12,7 +12,7 @@ whisper '[party'
 wait 500
 
 if gumpexists 3527489586
-    
+
     # supports party size up to 10?
     clearlist 'gumpResponses'
     createlist! 'gumpResponses'
@@ -26,13 +26,13 @@ if gumpexists 3527489586
     pushlist 'gumpResponses' 27
     pushlist 'gumpResponses' 28
     pushlist 'gumpResponses' 29
-    
-    clearsysmsg 
-    
+
+    clearsysmsg
+
     foreach response in gumpResponses
         waitforgump 3527489586
         gumpresponse response
-        waitforprompt 'any'
+        waitforprompt 'any' 500
         promptresponse "Hi"
         wait 500
         ######################################
@@ -44,7 +44,7 @@ if gumpexists 3527489586
             break
         endif
     endfor
-    
+
 else
     overhead "Start: Error, party gump must stay open" 34
     stop

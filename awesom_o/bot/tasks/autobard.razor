@@ -4,9 +4,11 @@
 
 overhead "AutoBard: starting" 2024
 
+hotkey 'clear target queue'
+
 if not timerexists botSkillTimer
     overhead "AutoBard: error, no skill timer!" 34
-    wait 1000
+    wait 200
     script 'awesom_o\bot\main'
 endif
 
@@ -20,7 +22,7 @@ endif
 // target random automatically applies a range check (set in razor), default 12
 removelist 'mobsFound'
 createlist 'mobsFound'
-for 10
+for 20
     hotkey 'next non-friendly monster target'
     if insysmsg "no one matching"
         break
@@ -49,48 +51,66 @@ foreach dist in 'distances'
     foreach mobFound in 'mobsFound'
         if find mobFound any any any dist
             pushlist! 'nearestMobs' mobFound
+            poplist 'mobsFound' mobFound
+            overhead 'In range' 69 mobFound
         endif
     endfor
 endfor
 
-unsetvar previousMob
-unsetvar thisMob
+// perform line-of-sight check
+removelist 'losMobs'
+createlist 'losMobs'
+whisper '[Aspect'
+wait 100
+foreach nearMob in 'nearestMobs'
+    waitforgump 2424293173
+    gumpresponse 100
+    waitfortarget 500
+    target nearMob
+    wait 100
+    if insysmsg 'is not arcane'
+        pushlist! 'losMobs' nearMob
+        overhead 'LOS Good' 69 nearMob
+    else
+        overhead 'LOS Bad' 33 nearMob
+    endif
+    hotkey 'clear target queue'
+endfor
+gumpclose
+
 unsetvar provoAttacker
 unsetvar provoVictim
 unsetvar peaceTarget
-foreach nearMob in 'nearestMobs'
-    if varexist thisMob
-        setvar! previousMob thisMob
-    endif
-    setvar! thisMob nearMob                
-    getlabel nearMob mobLabel    
-    if 'provoked' in mobLabel or 'pacified' in mobLabel        
-        // do nothing, continue broken?        
+foreach losMob in 'losMobs'
+    overhead index 25
+    getlabel losMob mobLabel
+    if 'provoked' in mobLabel or 'pacified' in mobLabel
+        overhead 'already barded' 2045 losMob
+        // set a punching bag
+        @setvar! autoProvoVictim losMob
     else
-        // provo if more than one mob nearby
-        if list 'nearestMobs' > 1
-            if varexist previousMob
-                @setvar! autoProvoAttacker thisMob
-                @setvar! autoProvoVictim previousMob
+        // provo if more than one mob
+        if list 'losMobs' > 1
+            if varexist autoProvoAttacker
+                @setvar! autoProvoVictim losMob
                 break
+            else
+                @setvar! autoProvoAttacker losMob
             endif
         // peace if there is only one mob
         else
-            @setvar! autoPeaceTarget thisMob
+            @setvar! autoPeaceTarget losMob
             break
         endif
     endif
 endfor
-
-# overhead "vars set"
 
 if varexist autoProvoAttacker and varexist autoProvoVictim
     overhead "Provoking"
     overhead "Attacker" 999 autoProvoAttacker
     overhead "Victim" 999 autoProvoVictim
     useskill 'Provocation'
-    // wait up to 10 seconds (worldsave)
-    waitfortarget 10000 
+    waitfortarget 500 
     if insysmsg "What instrument"
         if findtype "bamboo flute" backpack as inny
             target inny
@@ -109,14 +129,12 @@ if varexist autoProvoAttacker and varexist autoProvoVictim
             wait 200
             script 'awesom_o\bot\main'
         endif
-        // wait up to 10 seconds (worldsave)
-        waitfortarget 10000
+        waitfortarget 500
     endif
     
     if targetexists 
         target autoProvoAttacker
-        // wait up to 10 seconds (worldsave)
-        waitfortarget 10000
+        waitfortarget 500
         target autoProvoVictim
         wait 200
         if insysmsg "you play success"
@@ -142,8 +160,7 @@ if varexist autoPeaceTarget
     overhead "Peacemaking"
     overhead "Peace target" 999 autoPeaceTarget
     useskill 'Peacemaking'
-    // wait up to 10 seconds (worldsave)
-    waitfortarget 
+    waitfortarget 500
     if insysmsg "What instrument"
         if findtype "bamboo flute" backpack as inny
             target inny
@@ -162,8 +179,7 @@ if varexist autoPeaceTarget
             wait 200
             script 'awesom_o\bot\main'
         endif
-        // wait up to 10 seconds (worldsave)
-        waitfortarget 
+        waitfortarget 500
     endif
     
     if targetexists 
