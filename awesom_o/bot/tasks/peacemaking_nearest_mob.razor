@@ -1,0 +1,65 @@
+#########################################################################
+# Peacemaking module for Awesom-O bot
+# Uses peacemaking skill on nearest mob, retries on failure,
+# and reports results in party chat
+
+
+
+hotkey 'target closest non-friendly monster'
+wait 200
+if insysmsg "no one matching"
+    overhead  "target does not exist" 34
+    if varexist botIsPeacemaking
+        setvar! botIsPeacemaking 0
+    endif
+    wait 500
+    script 'awesom_o\bot\main'
+endif
+@setvar! mob lasttarget
+
+emote 'peacemaking'
+
+useskill 'peacemaking'
+waitfortarget 10000
+
+if insysmsg "What instrument"
+    if findtype "bamboo flute" backpack as inny
+        target inny
+    elseif findtype "tambourine" backpack as inny
+        target inny
+    elseif findtype "drum" backpack as inny
+        target inny
+    elseif findtype "lute" backpack as inny
+        target inny
+    elseif findtype "lap harp" backpack as inny
+        target inny
+    else
+        # do not retry
+        setvar! botIsPeacemaking 0
+        setvar! hasInstrument 0
+        overhead "I do not have an instrument" 34
+        emote "No instrument?"
+        wait 500
+        script 'awesom_o\bot\main'
+    endif
+    waitfortarget 10000
+endif
+
+target mob
+wait 500
+
+if insysmsg "you play successfully"    
+    # do not retry
+    setvar! botIsPeacemaking 0 
+    if timerexists botSkillTimer
+        settimer botSkillTimer 0 
+    endif 
+else
+    if timerexists botSkillTimer
+        # reset 1/2 timer
+        settimer botSkillTimer 5000 
+    endif   
+endif
+
+wait 500
+script 'awesom_o\bot\main'

@@ -1,0 +1,158 @@
+###########################################################################
+# Provoking module for Awesom-O bot
+# Uses provocation skill on two nearest mobs, retries on failure,
+
+if gumpexists 3527489586
+    if varexist masterDMGumpResponse        
+        gumpresponse masterDMGumpResponse
+        waitforprompt 'any'
+        promptresponse "Provocation: received"
+    else
+        overhead "Provocation: DM button not set, run bot setup" 34
+        stop
+    endif       
+else
+    overhead "peacemaking: party gump must be open" 34
+endif
+
+
+# determine if we already have targets set
+if not varexist provoMob1 or not varexist provoMob2
+    
+    // unset them both just in case one is set for some reason
+    unsetvar provoMob1
+    unsetvar provoMob2
+
+    removelist 'monstersFound'
+    @createlist! 'monstersFound'
+
+    // check for mobs up to 9 spaces away.  
+    // Agro distance is 10 spaces so we do not want to agro any new mobs
+    removelist 'distances'
+    @createlist! 'distances'
+    pushlist 'distances' 1
+    pushlist 'distances' 2
+    pushlist 'distances' 3
+    pushlist 'distances' 4
+    pushlist 'distances' 5
+    pushlist 'distances' 6
+    pushlist 'distances' 7
+    pushlist 'distances' 8
+    pushlist 'distances' 9
+    pushlist 'distances' 10
+
+    // search 10 mobs and add uniques to list for range check
+    // target random automatically applies a range check (set in razor), default 12
+    for 10
+        hotkey 'target random non-friendly monster'
+        @setvar! mob lasttarget 
+        if not inlist monstersFound mob 
+            pushlist monstersFound mob
+        endif            
+    endfor    
+
+    // perform range check to find the nearest two mobs
+    foreach dist in distances
+        // overhead dist
+        foreach monster in monstersFound
+            if find monster any any any dist
+                if varexist provoMob1 and monster != provoMob1
+                    @setvar! provoMob2 monster
+                    break
+                else
+                    @setvar! provoMob1 monster
+                endif         
+            endif
+        endfor
+        if varexist provoMob2
+            // both are set now
+            break
+        endif
+    endfor
+    
+    // stop if we do not have two targets
+    if not varexist provoMob1 or not varexist provoMob2
+        overhead "could not find two targets"
+        @setvar! botIsProvoking 0
+        // forget these mobs, pick new targets next time
+        unsetvar provoMob1
+        unsetvar provoMob2
+        wait 200
+        script 'awesom_o\bot\main'
+    endif
+    
+endif
+
+getlabel provoMob1 labelMob1
+overhead "MobOne = {{labelMob1}}" 50
+
+getlabel provoMob2 labelMob2
+overhead "MobTwo = {{labelMob2}}" 81
+
+// if both mobs are provoked, do nothing
+if 'provoked' in labelMob1 and 'provoked' in labelMob2
+    # both are provoked already
+    overhead "both of these mobs are provoked"
+    @setvar! botIsProvoking 0
+    # forget these mobs, pick new targets next time
+    unsetvar provoMob1
+    unsetvar provoMob2
+endif
+
+if timerexists botSkillTimer 
+    if timer botSkillTimer >= 11000
+        useskill 'Provocation'
+        wft 5000
+        if insysmsg "What instrument"
+            if findtype "bamboo flute" backpack as inny
+                target inny
+            elseif findtype "tambourine" backpack as inny
+                target inny
+            elseif findtype "drum" backpack as inny
+                target inny
+            elseif findtype "lute" backpack as inny
+                target inny
+            elseif findtype "lap harp" backpack as inny
+                target inny
+            else
+                # do not retry
+                @setvar! botIsProvoking 0
+                @setvar! hasInstrument 0
+                emote "Lost my instrument"
+                wait 200
+                script 'awesom_o\bot\main'
+            endif
+            wft 5000
+        endif
+        
+        if targetexists 
+            target provoMob1
+            waitfortarget 5000
+            target provoMob2
+            wait 200
+            if insysmsg "you play success"
+                if timerexists botSkillTimer
+                    settimer botSkillTimer 0    
+                    @setvar! botIsProvoking 0
+                    # forget these mobs, pick new targets next time
+                    unsetvar provoMob1
+                    unsetvar provoMob2                    
+                    overhead "provocation: success" 69               
+                endif
+            elseif timerexists botSkillTimer
+                # reset 1/2 timer for failure or unknowns
+                settimer botSkillTimer 5000
+                overhead "provocation: failure" 34               
+            endif
+        else
+            # do not retry
+            @setvar! botIsProvoking 0
+            overhead "provocation: target did not appear..."            
+        endif
+    else
+        overhead "provocation: Waiting for skill cooldown..." 88   
+    endif
+endif
+
+wait 200
+script 'awesom_o\bot\main'

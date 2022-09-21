@@ -1,0 +1,126 @@
+#########################################################################
+# Main script for Awesom-O bot
+# Monitors party chat for commands
+# Run start script first
+
+overhead "main: running" 2024
+
+# ensure party gump is up for DM communication
+whisper "[party"
+wait 100
+
+if not varexist masterDMGumpResponse or not varexist hasInstrument
+    overhead "Main: error, run setup" 34
+    stop
+endif
+   
+if not timerexists botSkillTimer
+    overhead "main: creating skill timer"
+    createtimer botSkillTimer
+    settimer botSkillTimer 11000
+    wait 500
+endif
+
+while not dead
+
+    # set peacemaking flag
+    if insysmsg "<<peacemaking>>" 
+        if varexist hasInstrument
+            if hasInstrument == 1
+                setvar! botIsPeacemaking 1
+            endif
+        endif
+    endif
+    
+    # set peacemaking flag
+    if insysmsg "<<provocation>>" 
+        if varexist hasInstrument
+            if hasInstrument == 1
+            setvar! botIsProvoking 1
+            endif
+        endif
+    endif
+    
+    # Toggle auto bard mode
+    if insysmsg "<<autobard>>"
+        if not varexist isAutoBardModeOn
+            setvar! isAutoBardModeOn 0
+        endif
+        if gumpexists 3527489586
+            gumpresponse masterDMGumpResponse
+            waitforprompt 'any' 500
+        endif        
+        if isAutoBardModeOn == 0
+            if hasInstrument == 1            
+                setvar! isAutoBardModeOn 1
+                promptresponse "Main: autobard ON"
+            else
+                promptresponse "Main: no instrument"
+            endif
+        else
+            setvar! isAutoBardModeOn 0                
+            promptresponse "Main: autobard OFF"
+        endif     
+    endif
+    
+    clearsysmsg
+    
+    # check flags and perform actions in order of priority
+    
+    if varexist botIsPeacemaking     
+        if botIsPeacemaking == 1
+            if timer botSkillTimer > 11000
+                overhead  "main: starting peacemaking" 2024
+                wait 200
+                script 'awesom_o\bot\tasks\peacemaking_nearest_mob'
+            endif
+        endif
+    endif
+    
+    if varexist botIsProvoking    
+        if botIsProvoking == 1
+            if timer botSkillTimer > 11000
+                overhead  "main: starting provoking" 2024
+                wait 200
+                script 'awesom_o\bot\tasks\provoke_nearest_mobs'
+            endif
+        endif
+    endif
+    
+    # note: buffs will never cast if autobard mode is on
+    if varexist isAutoBardModeOn
+        if isAutoBardModeOn == 1
+            if timer botSkillTimer > 11000
+                wait 200
+                script 'awesom_o\bot\tasks\autobard'
+            endif
+        endif    
+    endif
+    
+    #cast bard buffs as they expire
+    if varexist hasInstrument 
+        if hasInstrument == 1       
+            if timer botSkillTimer > 11000
+                if varexist forcePeaceBuff
+                    if not findbuff 'peacemaking' or forcePeaceBuff == 1
+                        if skill 'peacemaking' >= 80
+                            wait 200
+                            script 'awesom_o\bot\tasks\peacemaking_buff'
+                        endif
+                    endif
+                endif
+                if varexist forceProvBuff
+                    if not findbuff 'provocation' or forceProvBuff == 1
+                        if skill 'provocation' >= 80
+                            wait 200
+                            script 'awesom_o\bot\tasks\provocation_buff'    
+                        endif
+                    endif
+                endif
+            endif
+        endif
+    endif
+    
+    wait 200
+
+endwhile

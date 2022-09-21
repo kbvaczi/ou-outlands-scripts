@@ -1,0 +1,24 @@
+#########################################################################
+# Peacemaking script for Awesom-O bot master
+# sends peacemaking command
+
+# open party gump
+whisper '[party'
+wait 200
+
+if gumpexists 3527489586
+    if varexist botDMGumpResponse        
+        gumpresponse botDMGumpResponse
+        waitforprompt 'any'
+        promptresponse "<<peacemaking>>"
+        gumpclose
+    else
+        overhead "peacemaking: bot DM button not set, run master setup" 34
+        stop
+    endif       
+else
+    overhead "peacemaking: party gump must be open" 34
+endif
+
+wait 1000
+script 'awesom_o\master\main'

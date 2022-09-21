@@ -1,0 +1,92 @@
+##########################################################################
+# Setup script for Awesom-O bot
+# Be sure to change the master name so bot can communicate with master
+
+# The bot master will be the target for direct heals and other benefical skills
+# overhead "Who is my master?"
+# setvar! botMaster
+
+# Setup DM to bot master
+# open party gump
+whisper '[party'
+wait 500
+
+if gumpexists 3527489586
+    
+    # supports party size up to 10?
+    clearlist 'gumpResponses'
+    createlist! 'gumpResponses'
+    pushlist 'gumpResponses' 20
+    pushlist 'gumpResponses' 21
+    pushlist 'gumpResponses' 22
+    pushlist 'gumpResponses' 23
+    pushlist 'gumpResponses' 24
+    pushlist 'gumpResponses' 25
+    pushlist 'gumpResponses' 26
+    pushlist 'gumpResponses' 27
+    pushlist 'gumpResponses' 28
+    pushlist 'gumpResponses' 29
+    
+    clearsysmsg 
+    
+    foreach response in gumpResponses
+        waitforgump 3527489586
+        gumpresponse response
+        waitforprompt 'any'
+        promptresponse "Hi"
+        wait 500
+        ######################################
+        # replace this with your master name #
+        ######################################
+        if insysmsg "Eailyn"
+            overhead "bot DM gump response {{response}}"
+            setvar! masterDMGumpResponse response
+            break
+        endif
+    endfor
+    
+else
+    overhead "Start: Error, party gump must stay open" 34
+    stop
+endif
+
+######################################
+# reset variables and timers
+######################################
+
+# Check to see if we have an instrument
+removelist instrumentsNameList
+createlist! instrumentsNameList
+pushlist instrumentsNameList "bamboo flute"
+pushlist instrumentsNameList "tambourine"
+pushlist instrumentsNameList "drum"
+pushlist instrumentsNameList "lute"
+pushlist instrumentsNameList "lap harp"
+
+setvar! hasInstrument 0
+foreach instrumentName in instrumentsNameList
+    if findtype instrumentName backpack as instrument
+        getlabel instrument desc
+        overhead "I will be playing a {{desc}}"
+        setvar! hasInstrument 1
+        break
+    endif
+endfor
+if hasInstrument == 0
+    emote "I do not have an instrument" 34
+    stop
+endif
+
+# set to 1 to refresh bard buffs everytime bot is restarted
+setvar! forcePeaceBuff 1
+setvar! forceProvBuff 1
+
+# cancel any previous activities
+setvar! botIsPeacemaking 0
+setvar! botIsProvoking 0
+setvar! isAutoBardModeOn 0
+
+overhead "ready to serve" 69
+
+wait 2000
+script 'awesom_o\bot\main'

@@ -1,0 +1,24 @@
+#########################################################################
+# Provocation command script for Awesom-O bot master
+# Sends provocation command to bot through party chat
+
+# open party gump
+whisper "[party"
+wait 200
+
+if gumpexists 3527489586
+    if varexist botDMGumpResponse        
+        gumpresponse botDMGumpResponse
+        waitforprompt 'any'
+        promptresponse "<<provocation>>"
+        overhead "provocation command sent"
+    else
+        overhead "provocation: bot DM button not set, run master start script" 34
+        stop
+    endif       
+else
+    overhead "peacemaking: party gump must be open" 34
+endif
+
+wait 500
+script 'awesom_o\master\main'

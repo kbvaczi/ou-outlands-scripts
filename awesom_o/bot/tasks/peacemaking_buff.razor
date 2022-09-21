@@ -1,0 +1,47 @@
+#########################################################################
+# Peacemaking Buff module for Awesom-O bot
+# Uses provocation skill on backpack to create AOE buff for party members
+
+useskill 'peacemaking'
+waitfortarget 10000
+
+if insysmsg "What instrument"
+    if findtype "bamboo flute" backpack as inny
+        target inny
+    elseif findtype "tambourine" backpack as inny
+        target inny
+    elseif findtype "drum" backpack as inny
+        target inny
+    elseif findtype "lute" backpack as inny
+        target inny
+    elseif findtype "lap harp" backpack as inny
+        target inny
+    else
+        overhead "I do not have an instrument" 34
+        emote "Lost my instrument" 34
+        setvar! hasInstrument 0
+        wait 1000
+        script 'awesom_o\bot\main'
+    endif
+    waitfortarget 10000
+endif
+
+if targetexists 'any'
+    wait 200
+    target backpack
+    wait 200
+
+    if varexist forcePeaceBuff
+        setvar! forcePeaceBuff 0
+    endif
+    
+    if timerexists botSkillTimer
+        settimer botSkillTimer 0      
+    else
+        overhead "ERROR: no bot skill timer" 34
+    endif
+endif
+
+
+wait 500
+script 'awesom_o\bot\main'

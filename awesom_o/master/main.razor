@@ -1,0 +1,107 @@
+#########################################################################
+# Main script for Awesom-O bot master
+# handles various QOL automations and sends commands to bot
+# Run start script first
+
+#11 second timer pot
+if not timerexists "healPotTimer"
+    createtimer "healPotTimer"
+    settimer "healPotTimer" 11000
+endif 
+
+#11 second cure pot    
+if not timerexists "curePotTimer"
+    createtimer "curePotTimer"
+    settimer "curePotTimer" 11000
+endif
+
+#11 second skill delay
+if not timerexists "skillDelayTimer"
+    createtimer "skillDelayTimer"
+    settimer "skillDelayTimer" 11000
+endif
+
+#loops the rest while alive
+while not dead
+    
+    ###########################################
+    # Stealth Mechanics
+    ###########################################
+    
+    if skill 'stealth' > 50
+        if insysmsg 'You feel comfortable enough to begin stealthing'
+            overhead 'start stealth'
+        endif
+        
+        if insysmsg 'You feel ready to continue stealthing'
+            overhead 'refresh stealth'
+        endif
+        
+        if insysmsg 'You begin to move quietly'
+            overhead 'stealth starting'
+            settimer 'skillDelayTimer' 0
+        endif
+        
+        if insysmsg 'You have 2 stealth steps'
+            overhead 'STOP' 34
+        endif
+        
+        if timerexists 'skillDelayTimer'
+            if timer 'skillDelayTimer' > 10000
+            overhead 'skills ready' 2304
+                removetimer 'skillDelayTimer'
+            endif
+        endif
+    endif
+    
+    ###########################################
+    # Tracking PKs
+    ###########################################
+    
+    if skill 'tracking' > 50 and insysmsg 'Now Tracking'
+        overhead  'MURDERERS RUN!!' 34
+        clearsysmsg 
+    endif
+
+    ###########################################
+    # Auto-Potions
+    ###########################################
+    
+    if poisoned
+        overhead "I am poisoned" 34
+        if findtype 'Orange Potion' backpack and timer 'curePotTimer' > 11000
+            wait 100
+            overhead "main: Auto-cure activated" 34
+            lift weapon
+            drop backpack
+            wait 200
+            hotkey 'Drink Cure'
+            wait 200
+            dclick weapon
+            settimer 'curePotTimer' 0
+        endif
+    endif
+      
+    #Heal Pot Function under 25 health
+    if hp < 40
+        overhead "I need to heal" 34
+        if findtype "Yellow Potion" backpack and timer "healPotTimer" > 11000
+            overhead "main: auto-heal activated" 34
+            lift weapon
+            drop backpack
+            wait 200
+            potion 'heal'
+            wait 200
+            dclick weapon
+            settimer "healPotTimer" 0
+        endif       
+    endif
+
+    #PVP pouch pop to run away
+    if paralyzed
+        [pouch
+    endif
+    
+    wait 200
+    
+endwhile

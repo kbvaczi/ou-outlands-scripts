@@ -1,0 +1,53 @@
+# set right handed weapon
+if not rhandempty
+    overhead "setting right hand weapon"
+    setvar weapon righthand
+elseif not lhandempty
+    overhead "setting left hand weapon"
+    setvar weapon lefthand
+else
+    overhead "ERROR: No Weapon Found" 34
+endif
+
+# Determine which button sends a DM to your bot
+if gumpexists 3527489586
+    
+    # supports party size up to 10?
+    clearlist 'gumpResponses'
+    createlist! 'gumpResponses'
+    pushlist 'gumpResponses' 20
+    pushlist 'gumpResponses' 21
+    pushlist 'gumpResponses' 22
+    pushlist 'gumpResponses' 23
+    pushlist 'gumpResponses' 24
+    pushlist 'gumpResponses' 25
+    pushlist 'gumpResponses' 26
+    pushlist 'gumpResponses' 27
+    pushlist 'gumpResponses' 28
+    pushlist 'gumpResponses' 29
+    
+    clearsysmsg 
+    
+    foreach response in gumpResponses
+        waitforgump 3527489586
+        gumpresponse response
+        waitforprompt 'any'
+        promptresponse "Hello, teammate!"
+        wait 100
+        #####################################
+        # replace this with your bot name   #
+        #####################################
+        if insysmsg "Awesom-O"
+            overhead "bot DM gump response {{response}}"
+            setvar! botDMGumpResponse response
+            break
+        endif
+    endfor
+    
+else
+    overhead "party gump must stay open"
+    stop
+endif
+
+wait 500
+script 'awesom_o\master\main'

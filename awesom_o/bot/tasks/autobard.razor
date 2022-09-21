@@ -1,0 +1,191 @@
+###########################################################################
+# Autobard module for Awesom-O bot
+# Uses peacemaking and provocation skill automatically on nearest mobs
+
+overhead "AutoBard: starting" 2024
+
+if not timerexists botSkillTimer
+    overhead "AutoBard: error, no skill timer!" 34
+    wait 1000
+    script 'awesom_o\bot\main'
+endif
+
+if timer botSkillTimer < 11000
+    overhead "AutoBard: waiting on skill timer" 2034
+    wait 200
+    script 'awesom_o\bot\main'
+endif
+
+// search 10 mobs and add uniques to list for range check
+// target random automatically applies a range check (set in razor), default 12
+removelist 'mobsFound'
+createlist 'mobsFound'
+for 10
+    hotkey 'next non-friendly monster target'
+    if insysmsg "no one matching"
+        break
+    endif
+    @setvar! mob lasttarget
+    pushlist! 'mobsFound' mob
+endfor
+
+# overhead "mobs found" 999
+
+// Agro distance is 10 spaces
+removelist 'distances'
+createlist 'distances'
+pushlist 'distances' 1
+pushlist 'distances' 2
+pushlist 'distances' 3
+pushlist 'distances' 4
+pushlist 'distances' 6
+pushlist 'distances' 8
+pushlist 'distances' 10
+
+// perform range check to find the nearest mobs
+removelist 'nearestMobs'
+createlist 'nearestMobs'
+foreach dist in 'distances'
+    foreach mobFound in 'mobsFound'
+        if find mobFound any any any dist
+            pushlist! 'nearestMobs' mobFound
+        endif
+    endfor
+endfor
+
+unsetvar previousMob
+unsetvar thisMob
+unsetvar provoAttacker
+unsetvar provoVictim
+unsetvar peaceTarget
+foreach nearMob in 'nearestMobs'
+    if varexist thisMob
+        setvar! previousMob thisMob
+    endif
+    setvar! thisMob nearMob                
+    getlabel nearMob mobLabel    
+    if 'provoked' in mobLabel or 'pacified' in mobLabel        
+        // do nothing, continue broken?        
+    else
+        // provo if more than one mob nearby
+        if list 'nearestMobs' > 1
+            if varexist previousMob
+                @setvar! autoProvoAttacker thisMob
+                @setvar! autoProvoVictim previousMob
+                break
+            endif
+        // peace if there is only one mob
+        else
+            @setvar! autoPeaceTarget thisMob
+            break
+        endif
+    endif
+endfor
+
+# overhead "vars set"
+
+if varexist autoProvoAttacker and varexist autoProvoVictim
+    overhead "Provoking"
+    overhead "Attacker" 999 autoProvoAttacker
+    overhead "Victim" 999 autoProvoVictim
+    useskill 'Provocation'
+    // wait up to 10 seconds (worldsave)
+    waitfortarget 10000 
+    if insysmsg "What instrument"
+        if findtype "bamboo flute" backpack as inny
+            target inny
+        elseif findtype "tambourine" backpack as inny
+            target inny
+        elseif findtype "drum" backpack as inny
+            target inny
+        elseif findtype "lute" backpack as inny
+            target inny
+        elseif findtype "lap harp" backpack as inny
+            target inny
+        else
+            @setvar! isAutoBardModeOn 0
+            @setvar! hasInstrument 0
+            emote "Lost my instrument" 34
+            wait 200
+            script 'awesom_o\bot\main'
+        endif
+        // wait up to 10 seconds (worldsave)
+        waitfortarget 10000
+    endif
+    
+    if targetexists 
+        target autoProvoAttacker
+        // wait up to 10 seconds (worldsave)
+        waitfortarget 10000
+        target autoProvoVictim
+        wait 200
+        if insysmsg "you play success"
+            settimer botSkillTimer 0
+            overhead "AutoBard: provo success"
+        elseif insysmsg "t incite that!"
+            # reset 1/2 timer for failure or unknowns
+            settimer botSkillTimer 5000
+            overhead "AutoBard: provo fail" 34
+        else
+            settimer botSkillTimer 10000
+            overhead "AutoBard: unknown provo error" 34
+        endif
+    else
+        overhead "AutoBard: no provo target" 34
+    endif
+ 
+    unsetvar autoProvoAttacker
+    unsetvar autoProvoVictim
+endif
+
+if varexist autoPeaceTarget
+    overhead "Peacemaking"
+    overhead "Peace target" 999 autoPeaceTarget
+    useskill 'Peacemaking'
+    // wait up to 10 seconds (worldsave)
+    waitfortarget 
+    if insysmsg "What instrument"
+        if findtype "bamboo flute" backpack as inny
+            target inny
+        elseif findtype "tambourine" backpack as inny
+            target inny
+        elseif findtype "drum" backpack as inny
+            target inny
+        elseif findtype "lute" backpack as inny
+            target inny
+        elseif findtype "lap harp" backpack as inny
+            target inny
+        else
+            @setvar! isAutoBardModeOn 0
+            @setvar! hasInstrument 0
+            emote "Lost my instrument"
+            wait 200
+            script 'awesom_o\bot\main'
+        endif
+        // wait up to 10 seconds (worldsave)
+        waitfortarget 
+    endif
+    
+    if targetexists 
+        target autoPeaceTarget                
+        wait 200
+        if insysmsg "you play success"
+            settimer botSkillTimer 0
+            overhead "AutoBard: peace success"
+        elseif insysmsg "you fail"
+            # reset 1/2 timer for failure or unknowns
+            settimer botSkillTimer 5000
+            overhead "AutoBard: peace fail" 55               
+        else
+            settimer botSkillTimer 10000
+            overhead "AutoBard: unknown peace error" 34
+        endif
+    else
+        overhead "AutoBard: no peace target" 34
+    endif
+ 
+    unsetvar autoPeaceTarget
+endif
+
+wait 200
+script 'awesom_o\bot\main'

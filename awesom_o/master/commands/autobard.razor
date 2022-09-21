@@ -1,0 +1,24 @@
+#########################################################################
+# Autobard command script for Awesom-O bot master
+# sends autobard command
+
+# open party gump
+whisper '[party'
+wait 200
+
+if gumpexists 3527489586
+    if varexist botDMGumpResponse        
+        gumpresponse botDMGumpResponse
+        waitforprompt 'any'
+        promptresponse "<<autobard>>"
+        gumpclose
+    else
+        overhead "autobard: bot DM button not set, run master setup" 34
+        stop
+    endif       
+else
+    overhead "autobard: party gump must be open" 34
+endif
+
+wait 1000
+script 'awesom_o\master\main'
