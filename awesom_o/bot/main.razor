@@ -13,7 +13,7 @@ if not varexist masterDMGumpResponse or not varexist hasInstrument
     overhead "Main: error, run setup" 34
     stop
 endif
-
+   
 if not timerexists botSkillTimer
     overhead "main: creating skill timer"
     createtimer botSkillTimer
@@ -22,25 +22,30 @@ if not timerexists botSkillTimer
 endif
 
 while not dead
+    
+    # Announce murderers on tracking
+    if insysmsg 'Now Tracking'
+        emote 'Tracking Murderers' 34
+    endif
 
     # set peacemaking flag
-    if insysmsg "<<peacemaking>>"
+    if insysmsg "<<peacemaking>>" 
         if varexist hasInstrument
             if hasInstrument == 1
                 setvar! botIsPeacemaking 1
             endif
         endif
     endif
-
+    
     # set peacemaking flag
-    if insysmsg "<<provocation>>"
+    if insysmsg "<<provocation>>" 
         if varexist hasInstrument
             if hasInstrument == 1
             setvar! botIsProvoking 1
             endif
         endif
     endif
-
+    
     # Toggle auto bard mode
     if insysmsg "<<autobard>>"
         if not varexist isAutoBardModeOn
@@ -49,25 +54,25 @@ while not dead
         if gumpexists 3527489586
             gumpresponse masterDMGumpResponse
             waitforprompt 'any' 500
-        endif
+        endif        
         if isAutoBardModeOn == 0
-            if hasInstrument == 1
+            if hasInstrument == 1            
                 setvar! isAutoBardModeOn 1
                 promptresponse "Main: autobard ON"
             else
                 promptresponse "Main: no instrument"
             endif
         else
-            setvar! isAutoBardModeOn 0
+            setvar! isAutoBardModeOn 0                
             promptresponse "Main: autobard OFF"
-        endif
+        endif     
     endif
-
+    
     clearsysmsg
-
+    
     # check flags and perform actions in order of priority
-
-    if varexist botIsPeacemaking
+    
+    if varexist botIsPeacemaking     
         if botIsPeacemaking == 1
             if timer botSkillTimer > 11000
                 overhead  "main: starting peacemaking" 2024
@@ -76,8 +81,8 @@ while not dead
             endif
         endif
     endif
-
-    if varexist botIsProvoking
+    
+    if varexist botIsProvoking    
         if botIsProvoking == 1
             if timer botSkillTimer > 11000
                 overhead  "main: starting provoking" 2024
@@ -86,7 +91,7 @@ while not dead
             endif
         endif
     endif
-
+    
     # note: buffs will never cast if autobard mode is on
     if varexist isAutoBardModeOn
         if isAutoBardModeOn == 1
@@ -94,12 +99,12 @@ while not dead
                 wait 200
                 script 'awesom_o\bot\tasks\autobard'
             endif
-        endif
+        endif    
     endif
-
+    
     #cast bard buffs as they expire
-    if varexist hasInstrument
-        if hasInstrument == 1
+    if varexist hasInstrument 
+        if hasInstrument == 1       
             if timer botSkillTimer > 11000
                 if varexist forcePeaceBuff
                     if not findbuff 'peacemaking' or forcePeaceBuff == 1
@@ -113,14 +118,14 @@ while not dead
                     if not findbuff 'provocation' or forceProvBuff == 1
                         if skill 'provocation' >= 80
                             wait 200
-                            script 'awesom_o\bot\tasks\provocation_buff'
+                            script 'awesom_o\bot\tasks\provocation_buff'    
                         endif
                     endif
                 endif
             endif
         endif
     endif
-
+    
     wait 200
 
 endwhile

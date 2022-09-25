@@ -4,7 +4,11 @@
 
 overhead "AutoBard: starting" 2024
 
-hotkey 'clear target queue'
+// clear any target prompt
+target backpack
+
+// open aspect for LOS
+whisper '[Aspect'
 
 if not timerexists botSkillTimer
     overhead "AutoBard: error, no skill timer!" 34
@@ -60,55 +64,65 @@ endfor
 // perform line-of-sight check
 removelist 'losMobs'
 createlist 'losMobs'
-whisper '[Aspect'
-wait 100
+
 foreach nearMob in 'nearestMobs'
-    waitforgump 2424293173
+    waitforgump 2424293173   
     gumpresponse 100
     waitfortarget 500
     target nearMob
-    wait 100
+    wait 150
     if insysmsg 'is not arcane'
         pushlist! 'losMobs' nearMob
         overhead 'LOS Good' 69 nearMob
     else
         overhead 'LOS Bad' 33 nearMob
     endif
-    hotkey 'clear target queue'
 endfor
-gumpclose
 
-unsetvar provoAttacker
-unsetvar provoVictim
-unsetvar peaceTarget
+// look for barding targets
+unsetvar alreadyBardedMob
+unsetvar firstBardingTarget
+unsetvar secondBardingTarget
 foreach losMob in 'losMobs'
-    overhead index 25
     getlabel losMob mobLabel
-    if 'provoked' in mobLabel or 'pacified' in mobLabel
-        overhead 'already barded' 2045 losMob
-        // set a punching bag
-        @setvar! autoProvoVictim losMob
+    if 'provoked' in mobLabel or 'pacified' in mobLabel 
+        overhead 'already barded' 69 losMob
+        // potential punching bag
+        @setvar! alreadyBardedMob losMob
+    elseif 'barding break' in mobLabel
+        // cannot be a target for barding
+        overhead 'barding break' 33 losMob
     else
-        // provo if more than one mob
-        if list 'losMobs' > 1
-            if varexist autoProvoAttacker
-                @setvar! autoProvoVictim losMob
-                break
-            else
-                @setvar! autoProvoAttacker losMob
-            endif
-        // peace if there is only one mob
-        else
-            @setvar! autoPeaceTarget losMob
+        if varexist firstBardingTarget
+            @setvar! secondBardingTarget losMob
+            // found two targets, no need to look further
             break
+        else
+            // set first target, continue looking for a second target
+            @setvar! firstBardingTarget losMob
         endif
     endif
 endfor
 
-if varexist autoProvoAttacker and varexist autoProvoVictim
+// Peace or provo based on number of targets available
+unsetvar provoAttacker
+unsetvar provoVictim
+unsetvar peaceTarget
+if varexist firstBardingTarget and varexist secondBardingTarget
+    @setvar! provoAttacker secondBardingTarget
+    @setvar! provoVictim firstBardingTarget
+elseif varexist firstBardingTarget and varexist alreadyBardedMob
+    @setvar! provoAttacker firstBardingTarget
+    @setvar! provoVictim alreadyBardedMob
+elseif varexist firstBardingTarget
+    @setvar! peaceTarget firstBardingTarget
+endif
+
+// Provoke if we have targets
+if varexist provoAttacker and varexist provoVictim
     overhead "Provoking"
-    overhead "Attacker" 999 autoProvoAttacker
-    overhead "Victim" 999 autoProvoVictim
+    overhead "Attacker" 999 provoAttacker
+    overhead "Victim" 999 provoVictim
     useskill 'Provocation'
     waitfortarget 500 
     if insysmsg "What instrument"
@@ -133,9 +147,9 @@ if varexist autoProvoAttacker and varexist autoProvoVictim
     endif
     
     if targetexists 
-        target autoProvoAttacker
+        target provoAttacker
         waitfortarget 500
-        target autoProvoVictim
+        target provoVictim
         wait 200
         if insysmsg "you play success"
             settimer botSkillTimer 0
@@ -152,13 +166,14 @@ if varexist autoProvoAttacker and varexist autoProvoVictim
         overhead "AutoBard: no provo target" 34
     endif
  
-    unsetvar autoProvoAttacker
-    unsetvar autoProvoVictim
+    unsetvar provoAttacker
+    unsetvar provoVictim
 endif
 
-if varexist autoPeaceTarget
+// Peace if we have a target
+if varexist peaceTarget
     overhead "Peacemaking"
-    overhead "Peace target" 999 autoPeaceTarget
+    overhead "Peace target" 999 peaceTarget
     useskill 'Peacemaking'
     waitfortarget 500
     if insysmsg "What instrument"
@@ -183,7 +198,7 @@ if varexist autoPeaceTarget
     endif
     
     if targetexists 
-        target autoPeaceTarget                
+        target peaceTarget                
         wait 200
         if insysmsg "you play success"
             settimer botSkillTimer 0
@@ -200,7 +215,7 @@ if varexist autoPeaceTarget
         overhead "AutoBard: no peace target" 34
     endif
  
-    unsetvar autoPeaceTarget
+    unsetvar peaceTarget
 endif
 
 wait 200

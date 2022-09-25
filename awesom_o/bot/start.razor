@@ -3,8 +3,10 @@
 # Be sure to change the master name so bot can communicate with master
 
 # The bot master will be the target for direct heals and other benefical skills
-# overhead "Who is my master?"
-# setvar! botMaster
+if not varexist botMaster
+    overhead "Who is my master?"
+    setvar! botMaster
+endif
 
 # Setup DM to bot master
 # open party gump
@@ -12,7 +14,7 @@ whisper '[party'
 wait 500
 
 if gumpexists 3527489586
-
+    
     # supports party size up to 10?
     clearlist 'gumpResponses'
     createlist! 'gumpResponses'
@@ -26,9 +28,9 @@ if gumpexists 3527489586
     pushlist 'gumpResponses' 27
     pushlist 'gumpResponses' 28
     pushlist 'gumpResponses' 29
-
-    clearsysmsg
-
+    
+    clearsysmsg 
+    
     foreach response in gumpResponses
         waitforgump 3527489586
         gumpresponse response
@@ -44,7 +46,7 @@ if gumpexists 3527489586
             break
         endif
     endfor
-
+    
 else
     overhead "Start: Error, party gump must stay open" 34
     stop
@@ -84,7 +86,7 @@ setvar! forceProvBuff 1
 # cancel any previous activities
 setvar! botIsPeacemaking 0
 setvar! botIsProvoking 0
-setvar! isAutoBardModeOn 0
+setvar! isAutoBardModeOn 1
 
 overhead "ready to serve" 69
 
