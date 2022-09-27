@@ -16,7 +16,13 @@ if not timerexists botSkillTimer
     script 'awesom_o\bot\main'
 endif
 
-if timer botSkillTimer < 11000
+// Discord skill timer independent of peace/provo
+if not timerexists discordSkillTimer
+    createtimer discordSkillTimer
+    settimer discordSkillTimer 0
+endif
+
+if timer botSkillTimer < 10500 and discordSkillTimer < 10500
     overhead "AutoBard: waiting on skill timer" 2034
     wait 200
     script 'awesom_o\bot\main'
@@ -81,14 +87,19 @@ endfor
 
 // look for barding targets
 unsetvar alreadyBardedMob
+unsetvar discordTarget
 unsetvar firstBardingTarget
 unsetvar secondBardingTarget
 foreach losMob in 'losMobs'
     getlabel losMob mobLabel
-    if 'provoked' in mobLabel or 'pacified' in mobLabel 
-        overhead 'already barded' 69 losMob
-        // potential punching bag
+    if 'provoked' in mobLabel or 'pacified' in mobLabel
         @setvar! alreadyBardedMob losMob
+        if 'discord' in mobLabel            
+            overhead 'already CCd + disc' 69 losMob
+        else
+            overhead 'already CCd' 69 losMob
+            @setvar! discordTarget losMob
+        endif
     elseif 'barding break' in mobLabel
         // cannot be a target for barding
         overhead 'barding break' 33 losMob
@@ -119,7 +130,7 @@ elseif varexist firstBardingTarget
 endif
 
 // Provoke if we have targets
-if varexist provoAttacker and varexist provoVictim
+if varexist provoAttacker and varexist provoVictim and timer botSkillTimer > 10500 and skill Provocation >= 80
     overhead "Provoking"
     overhead "Attacker" 999 provoAttacker
     overhead "Victim" 999 provoVictim
@@ -155,23 +166,19 @@ if varexist provoAttacker and varexist provoVictim
             settimer botSkillTimer 0
             overhead "AutoBard: provo success"
         elseif insysmsg "t incite that!"
-            # reset 1/2 timer for failure or unknowns
+            # reset 1/2 timer for failure
             settimer botSkillTimer 5000
             overhead "AutoBard: provo fail" 34
         else
-            settimer botSkillTimer 10000
             overhead "AutoBard: unknown provo error" 34
         endif
     else
         overhead "AutoBard: no provo target" 34
     endif
- 
-    unsetvar provoAttacker
-    unsetvar provoVictim
 endif
 
 // Peace if we have a target
-if varexist peaceTarget
+if varexist peaceTarget and timer botSkillTimer > 10500 and skill Peacemaking >= 80
     overhead "Peacemaking"
     overhead "Peace target" 999 peaceTarget
     useskill 'Peacemaking'
@@ -204,18 +211,62 @@ if varexist peaceTarget
             settimer botSkillTimer 0
             overhead "AutoBard: peace success"
         elseif insysmsg "you fail"
-            # reset 1/2 timer for failure or unknowns
+            # reset 1/2 timer for failure
             settimer botSkillTimer 5000
             overhead "AutoBard: peace fail" 55               
         else
-            settimer botSkillTimer 10000
             overhead "AutoBard: unknown peace error" 34
         endif
     else
         overhead "AutoBard: no peace target" 34
     endif
- 
-    unsetvar peaceTarget
+endif
+
+// Discord target
+if varexist discordTarget and timer discordSkillTimer > 10500 and skill Discordance >= 80
+    overhead "Discording"
+    overhead "Discord target" 999 discordTarget
+    useskill 'Discordance'
+    waitfortarget 500
+    if insysmsg "What instrument"
+        if findtype "bamboo flute" backpack as inny
+            target inny
+        elseif findtype "tambourine" backpack as inny
+            target inny
+        elseif findtype "drum" backpack as inny
+            target inny
+        elseif findtype "lute" backpack as inny
+            target inny
+        elseif findtype "lap harp" backpack as inny
+            target inny
+        else
+            @setvar! isAutoBardModeOn 0
+            @setvar! hasInstrument 0
+            emote "Lost my instrument"
+            wait 200
+            script 'awesom_o\bot\main'
+        endif
+        waitfortarget 500
+    endif
+    
+    if targetexists
+        target discordTarget                
+        wait 200
+        if insysmsg "you play success"
+            settimer discordSkillTimer 0
+            settimer botSkillTimer 5000
+            overhead "AutoBard: discord success"
+        elseif insysmsg "you fail"
+            # reset 1/2 timer for failure
+            settimer discordSkillTimer 5000
+            settimer botSkillTimer 5000
+            overhead "AutoBard: discord fail" 55               
+        else
+            overhead "AutoBard: unknown discord error" 34
+        endif
+    else
+        overhead "AutoBard: no discord target" 34
+    endif
 endif
 
 wait 200

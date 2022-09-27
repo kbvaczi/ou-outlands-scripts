@@ -70,55 +70,69 @@ while not dead
     
     clearsysmsg
     
-    # check flags and perform actions in order of priority
-    
-    if varexist botIsPeacemaking     
-        if botIsPeacemaking == 1
-            if timer botSkillTimer > 11000
-                overhead  "main: starting peacemaking" 2024
-                wait 200
-                script 'awesom_o\bot\tasks\peacemaking_nearest_mob'
-            endif
-        endif
-    endif
-    
-    if varexist botIsProvoking    
-        if botIsProvoking == 1
-            if timer botSkillTimer > 11000
-                overhead  "main: starting provoking" 2024
-                wait 200
-                script 'awesom_o\bot\tasks\provoke_nearest_mobs'
-            endif
-        endif
-    endif
-    
-    # note: buffs will never cast if autobard mode is on
-    if varexist isAutoBardModeOn
-        if isAutoBardModeOn == 1
-            if timer botSkillTimer > 11000
-                wait 200
-                script 'awesom_o\bot\tasks\autobard'
-            endif
-        endif    
-    endif
-    
-    #cast bard buffs as they expire
     if varexist hasInstrument 
-        if hasInstrument == 1       
-            if timer botSkillTimer > 11000
+        if hasInstrument == 1
+       
+            ####################################
+            # Barding tasks based on flags set in order of priority
+            ####################################
+            
+            if varexist botIsPeacemaking     
+                if botIsPeacemaking == 1
+                    if timer botSkillTimer > 11000
+                        overhead  "main: starting peacemaking" 2024
+                        wait 200
+                        script 'awesom_o\bot\tasks\peacemaking_nearest_mob'
+                    endif
+                endif
+            endif
+            
+            if varexist botIsProvoking  
+                if botIsProvoking == 1
+                    if timer botSkillTimer > 11000
+                        overhead  "main: starting provoking" 2024
+                        wait 200
+                        script 'awesom_o\bot\tasks\provoke_nearest_mobs'
+                    endif
+                endif
+            endif
+            
+            # note: buffs will never cast if autobard mode is on
+            if varexist isAutoBardModeOn
+                if isAutoBardModeOn == 1
+                    // Can switch between discord and provo/peace every 5 seconds
+                    if timer botSkillTimer > 5500
+                        wait 200
+                        script 'awesom_o\bot\tasks\autobard'
+                    endif
+                endif    
+            endif
+   
+            ####################################
+            # cast bard buffs as they expire
+            ####################################
+            
+            if timer botSkillTimer > 10500
                 if varexist forcePeaceBuff
-                    if not findbuff 'peacemaking' or forcePeaceBuff == 1
+                    if not findbuff 'peacemaking' or forcePeaceBuff == 1 
                         if skill 'peacemaking' >= 80
                             wait 200
                             script 'awesom_o\bot\tasks\peacemaking_buff'
                         endif
                     endif
-                endif
-                if varexist forceProvBuff
+                
                     if not findbuff 'provocation' or forceProvBuff == 1
                         if skill 'provocation' >= 80
                             wait 200
                             script 'awesom_o\bot\tasks\provocation_buff'    
+                        endif
+                    endif
+                
+                
+                    if not findbuff 'discordance' or forceProvBuff == 1
+                        if skill 'discordance' >= 80
+                            wait 200
+                            script 'awesom_o\bot\tasks\discordance_buff'    
                         endif
                     endif
                 endif
